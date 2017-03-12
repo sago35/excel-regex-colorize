@@ -6,6 +6,8 @@ Colorize string by regex
 
 See demo.
 
+![](https://raw.githubusercontent.com/wiki/sago35/excel-regex-colorize/demo.gif)
+
 ## Install
 
 Use `bin\excel-regex-colorize-installer.xls` to nstall and uninstall.
