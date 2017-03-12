@@ -1,0 +1,66 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "Sheet1"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Option Explicit
+
+Private Const MSADDIN_PATH = "Microsoft\AddIns"
+Private Const AddinName = "excel-regex-colorize"
+
+Sub AddinInstall()
+
+  Dim BookName As String
+  Dim BookPath As String
+  Dim AddinFile As String
+  Dim SrcAddinFile As String
+  Dim DistAddinFile As String
+  
+  BookName = ThisWorkbook.Name
+  AddinFile = AddinName & ".xla"
+  
+  BookPath = ThisWorkbook.Path
+  SrcAddinFile = BookPath & "\" & AddinFile
+  
+  If Dir(SrcAddinFile) = "" Then
+    MsgBox "Addin file is not found." & vbCrLf & SrcAddinFile, vbCritical
+    Exit Sub
+  End If
+  
+  DistAddinFile = Environ("APPDATA") & "\" & MSADDIN_PATH & "\" & AddinFile
+  
+  If Dir(DistAddinFile) <> "" Then
+    AddIns(AddinName).Installed = False
+  End If
+  
+  FileCopy SrcAddinFile, DistAddinFile
+  AddIns(AddinName).Installed = True
+  
+  MsgBox "Installed"
+  
+End Sub
+
+
+Sub AddinUnInstall()
+
+  Dim BookName As String
+  Dim AddinFile As String
+  Dim DelAddinFile As String
+  
+  BookName = ThisWorkbook.Name
+  AddinFile = AddinName & ".xla"
+  
+  DelAddinFile = Environ("APPDATA") & "\" & MSADDIN_PATH & "\" & AddinFile
+  
+  If Dir(DelAddinFile) <> "" Then
+    AddIns(AddinName).Installed = False
+    Kill DelAddinFile
+  End If
+  
+  MsgBox "Uninstalled"
+  
+End Sub

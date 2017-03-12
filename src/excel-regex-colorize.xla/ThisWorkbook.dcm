@@ -1,0 +1,166 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ThisWorkbook"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+Option Explicit
+
+Private WithEvents sht As Worksheet
+Attribute sht.VB_VarHelpID = -1
+Public shortcutkey As String
+Public MENU_TITLE As String
+Public ADDIN_BUTTON_NAME1 As String
+Public ADDIN_BUTTON_NAME2 As String
+
+'Workbook起動時
+Private Sub Workbook_Open()
+
+    Dim SettingFile As String
+    Dim LoadInfo As SettingFileInfo
+    Dim IntFlNo As Integer
+    Dim buf
+    
+    SettingFile = Environ("APPDATA") & "\" & regex_colorize.MSADDIN_PATH_SETTING_FILE
+    LoadInfo = regex_colorize.LoadSettingFile(SettingFile)
+    
+    'ショートカットキーの登録
+    shortcutkey = LoadInfo.shortcutkey
+    
+    If shortcutkey <> "" Then
+        Application.OnKey "^" & shortcutkey, "regex_colorize.regex_highlight"
+    End If
+    
+End Sub
+
+'アドインインストール時
+Private Sub Workbook_AddinInstall()
+    On Error GoTo ErrHand
+    Initialize
+    
+    Dim cbrCmd As CommandBar
+    Dim cbcMenu As CommandBarControl
+
+    'メニュー用のオブジェクトを作ります
+    Set cbrCmd = Application.CommandBars("Worksheet Menu Bar")
+
+    '作成済みであればいったん削除します
+    '存在しないとエラーが出ますが、On Error…で回避しています
+    cbrCmd.Controls(MENU_TITLE).Delete
+
+    'メニューを追加し、表題を設定します
+    Set cbcMenu = cbrCmd.Controls.Add(Type:=msoControlPopup)
+    cbcMenu.Caption = MENU_TITLE
+
+    'メニューの中にボタン「ボタン1」を追加します
+    With cbcMenu.Controls.Add(Type:=msoControlButton)
+        .Caption = ADDIN_BUTTON_NAME1
+        'アイコンの種類を番号で指定
+        .FaceId = 1087
+        '実行するサブルーチン名を指定
+        .OnAction = "regex_colorize.regex_highlight"
+    End With
+    
+    'メニューの中にボタン「ボタン2」を追加します
+    With cbcMenu.Controls.Add(Type:=msoControlButton)
+        .Caption = ADDIN_BUTTON_NAME2
+        'アイコンの種類を番号で指定
+        .FaceId = 2502
+        '実行するサブルーチン名を指定
+        .OnAction = "regex_colorize.setting"
+    End With
+
+    Set cbrCmd = Nothing
+    Set cbcMenu = Nothing
+
+    Exit Sub
+
+ErrHand:
+
+    Resume Next
+    
+    '右クリックメニュー登録
+    Dim Newb, currentControl, exists
+    
+    'コントロールの中身を検索
+    exists = 0
+    For Each currentControl In Application.CommandBars("Cell").Controls
+        If (currentControl.Caption = "文字列色付け") Then
+            exists = 1
+        End If
+    Next
+    
+    '文字列色付けがなければ追加
+    If (exists = 0) Then
+        Set Newb = Application.CommandBars("Cell").Controls.Add()
+        With Newb
+            .Caption = "文字列色付け"
+            .OnAction = "regex_highlight"
+            .BeginGroup = False
+        End With
+    End If
+    
+    
+End Sub
+
+
+'アドインインアンストール時
+Private Sub Workbook_AddinUninstall()
+    'アドインタブメニュー
+    On Error Resume Next
+    Initialize
+    Application.CommandBars("Worksheet Menu Bar").Controls(MENU_TITLE).Delete  'for old version 1.0
+    Application.CommandBars("Worksheet Menu Bar").Controls(ADDIN_BUTTON_NAME1).Delete
+    Application.CommandBars("Worksheet Menu Bar").Controls(ADDIN_BUTTON_NAME2).Delete
+    
+    Dim currentControl, exists
+    Dim SettingFile As String
+    
+    'コントロールの中身を検索
+    exists = 0
+    For Each currentControl In Application.CommandBars("Cell").Controls
+        If (currentControl.Caption = "文字列色付け") Then
+            exists = 1
+        End If
+    Next
+    
+    '文字列色付けがあれば削除
+    If (exists = 1) Then
+        Application.CommandBars("Cell").Controls("文字列色付け").Delete
+    End If
+    
+    '設定ファイルを削除
+    SettingFile = Environ("APPDATA") & "\" & regex_colorize.MSADDIN_PATH_SETTING_FILE
+    
+    If Dir(SettingFile) <> "" Then
+        Kill SettingFile
+    End If
+    
+End Sub
+
+Private Sub Initialize()
+    MENU_TITLE = "文字列色付け"
+    ADDIN_BUTTON_NAME1 = "起動"
+    ADDIN_BUTTON_NAME2 = "設定"
+End Sub
+
+'アクティブなシートのイベント発生を許可する
+Sub set_sht()
+    Set sht = Application.ActiveSheet
+End Sub
+
+
+'アクティブなシートのイベント発生を禁止する
+Sub reset_sht()
+    Set sht = Nothing
+End Sub
+
+
+'アクティブなシートの選択セル変更でイベント発生する
+Sub sht_SelectionChange(ByVal Target As Range)
+    '文字列候補&文字サイズを更新する
+    Call regex_colorize.SerchKeyWord
+End Sub
