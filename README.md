@@ -10,7 +10,8 @@ See demo.
 
 ## Install
 
-Use `bin\excel-regex-colorize-installer.xls` to nstall and uninstall.
+Go to the [release page](https://github.com/sago35/excel-regex-colorize/releases), and download the zip file.
+Unpack the zip file, and use `excel-regex-colorize-installer.xls` to nstall and uninstall.
 
 ## Licence
 
